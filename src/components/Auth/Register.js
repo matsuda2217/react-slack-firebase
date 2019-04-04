@@ -16,20 +16,42 @@ class Register extends React.Component {
     email: "",
     password: "",
     passwordConfirmation: "",
+    errors: []
   }
   handleChange = event => {
     console.log("event", event.target.name, event.target.value);
     this.setState({[event.target.name]: event.target.value});
   }
   handleSubmit = event => {
-    event.preventDefault();
-    firebase
-    .auth()
-    .createUserWithEmailAndPassword(this.state.email, this.state.password)
-    .then(userCreated => {
-      console.log("userCreated", userCreated)
-    })
-    .catch(err => console.log("Error happen: ", err));
+    if (this.ifFormValid() ) {
+      event.preventDefault();
+      firebase
+      .auth()
+      .createUserWithEmailAndPassword(this.state.email, this.state.password)
+      .then(userCreated => {
+        console.log("userCreated", userCreated)
+      })
+      .catch(err => console.log("Error happen: ", err));
+    }
+  }
+  isFormValid() {
+    if( this.isFormEmpty(this.state) ) {
+      return false;
+    } else if ( !this.isPasswordValid()) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  isFormEmpty = ({ username, email, password, passwordConfirmation }) => {
+    return !username.length || !email.length || !password.length || !passwordConfirmation.length
+  }
+  isPasswordValid = ({password, passwordConfirmation}) => {
+    if (password.length < 6 || passwordConfirmation.length < 6 || ( password !== passwordConfirmation)) {
+      return flase;
+    } else {
+      return true;
+    }
   }
   render() {
     const { username, email, password, passwordConfirmation } = this.state;
