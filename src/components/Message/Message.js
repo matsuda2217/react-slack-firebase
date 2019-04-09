@@ -12,6 +12,9 @@ class Message extends React.Component {
     messages: [],
     channel: this.props.currentChannel,
     user: this.props.currentUser,
+    searchTerm: '',
+    searchLoading: false,
+    searchResult: []
   }
 
   componentDidMount = () => {
@@ -69,19 +72,41 @@ class Message extends React.Component {
     }, [])
     return ids;
   }
+  handleSearchMessage = event => {
+    let searchTerm = event.target.value;
+    console.log("searchTerm", searchTerm);
+    this.setState({
+      searchLoading: true,
+      searchTerm
+    });
+    let searchRegex = new RegExp(searchTerm, "gi");
+    let searchResult = [];
+    searchResult = this.state.messages.reduce((acc, msg) => {
+      if (msg.content && msg.content.match(searchRegex) || msg.user.name.match(searchRegex)) {
+        acc.push(msg);
+      }
+      return acc;
+    }, []);
+    this.setState({
+      searchResult,
+    }, () => setTimeout( () => this.setState({searchLoading: false}) , 1000))
+  }
+
   render() {
-    const { messageRef, messages } = this.state;
+    const { messageRef, messages, searchResult, searchLoading, searchTerm } = this.state;
     const { currentUser, currentChannel } = this.props;
     return (
       <React.Fragment>
-        <MessagesHeader 
+        <MessagesHeader
+          searchLoading={searchLoading}
+          handleSearchMessage={this.handleSearchMessage}
           userAmount={this.caculateTotalUsers(messages)}
           channelName={this.displayChannelName(currentChannel)}
         />
           <Segment>
             <Comment.Group className="messages">
               {/* messages */}
-              {this.displayMessages(messages)}
+              { searchTerm ? this.displayMessages(searchResult) : this.displayMessages(messages)}
             </Comment.Group>
           </Segment>
         <MessagesForm
