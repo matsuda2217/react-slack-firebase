@@ -1,17 +1,21 @@
 import React from 'react';
-import { Comment, Icon } from 'semantic-ui-react';
+import { Comment, Icon, Image } from 'semantic-ui-react';
 
 class Msg extends React.Component{
+  isUserMessage =(msg, user) => {
+    return msg.user.id === user.uid;
+  }
   render() {
-    const {msg} = this.props;
+    const {msg, user} = this.props;
     return(
     <Comment.Group>
     <Comment>
-      <Comment.Avatar as='a' src='https://react.semantic-ui.com/images/avatar/small/joe.jpg' />
-      <Comment.Content>
-        <Comment.Author>Tom Lukic</Comment.Author>
+      <Comment.Avatar as='a' src={msg.user.avatar} />
+      <Comment.Content className={this.isUserMessage(msg,user) ? "message__self" : ""}>
+        <Comment.Author>{msg.user.name}</Comment.Author>
         <Comment.Text>
-          This will be great for business reports. I will definitely download this.
+          {msg.content}
+          {msg.image && <Image src={msg.image} className="message__image"/>}
         </Comment.Text>
         <Comment.Actions>
           <Comment.Action>Reply</Comment.Action>

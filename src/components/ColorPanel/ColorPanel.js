@@ -10,7 +10,7 @@ class ColorPanel extends React.Component {
       icon='labeled'
       vertical
       inverted
-      visible={true}
+      visible={false}
       width='very thin'
     >
 

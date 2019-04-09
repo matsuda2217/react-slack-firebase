@@ -13,24 +13,24 @@ class Message extends React.Component {
     channel: this.props.currentChannel,
     user: this.props.currentUser,
   }
-  componentWillReceiveProps = nextProps => {
-    this.setState({channel: nextProps.currentChannel})
-  }
 
   componentDidMount = () => {
-    const { user, channel } = this.state;
-    // const {currentChannel: channel} = this.props;
-    console.log("currentChannel", channel);
+    const { currentUser:user, currentChannel: channel } = this.props;
     if(channel && user) {
       this.addListener(channel.id);
     }
   }
-  // componentDidUpdate = () => {
-  //   const { channel, user } = this.state;
-  //   if(channel && user) {
-  //     this.addListener(channel.id);
-  //   }
-  // }
+  componentWillMount = () => {
+    this.state.messageRef.off();
+  }
+  componentWillReceiveProps = nextProps => {
+    const {currentChannel: channel} = nextProps;
+    if (channel) {
+      this.setState({ channel}, () => {
+        this.addListener(channel.id);
+      })
+    }
+  }
 
   addListener = channelID => {
     this.addMessageListener(channelID)
@@ -39,8 +39,9 @@ class Message extends React.Component {
   addMessageListener = channelID => {
     const loadedMessages = [];
     const { messageRef } = this.state;
+    this.setState({messages: []});
     messageRef.child(channelID).on("child_added", snap => {
-      console.log("messagesssss", snap.val());
+      // console.log("messagesssss", snap.val());
       loadedMessages.push(snap.val());
       this.setState({
         messages: loadedMessages,
@@ -51,16 +52,32 @@ class Message extends React.Component {
   displayMessages = messages => (
     messages.length > 0 && messages.map(msg => (
       <Msg
+        key={msg.timestamp}
         msg={msg}
+        user={this.props.currentUser}
       />
     ))
   )
+  displayChannelName = channel => (channel ? `#${channel.name}`: "");
+  caculateTotalUsers = messages => {
+    let ids = messages.reduce((acc, msg) => {
+      const { user: { id } } = msg;
+      if(!acc.includes(id)) {
+        acc.push(id)
+      }
+      return acc;
+    }, [])
+    return ids;
+  }
   render() {
     const { messageRef, messages } = this.state;
     const { currentUser, currentChannel } = this.props;
     return (
       <React.Fragment>
-        <MessagesHeader/>
+        <MessagesHeader 
+          userAmount={this.caculateTotalUsers(messages)}
+          channelName={this.displayChannelName(currentChannel)}
+        />
           <Segment>
             <Comment.Group className="messages">
               {/* messages */}

@@ -25,7 +25,7 @@ class Channels extends React.Component {
   addListener = () => {
     const loaddedChannels = [];
     this.state.channelRef.on("child_added", snap => {
-      console.log("snap", snap.val());
+      // console.log("snap", snap.val());
       loaddedChannels.push(snap.val());
       this.setState({channels: loaddedChannels}, () => this.setFirstChannel());
     })
@@ -37,6 +37,7 @@ class Channels extends React.Component {
     const firstChannel = this.state.channels[0];
     if (this.state.firstLoad && this.state.channels.length > 0) {
       this.props.setCurrentChannel(firstChannel);
+      this.setState({activeChannel: firstChannel.id});
     }
 
     this.setState({firstLoad: false});
@@ -80,11 +81,12 @@ class Channels extends React.Component {
   isFormValid = ({channelName, chanelDescription}) => (channelName && chanelDescription);
 
   handleChannelChange = channel => {
-    this.props.setCurrentChannel(channel);
+    console.log("channel::::", channel);
     this.setState({ 
       currentChannel: channel,
       activeChannel: channel.id
     })
+    this.props.setCurrentChannel(channel);
   }
   displayChannels = channels => (
     channels.length > 0 && channels.map(channel => (

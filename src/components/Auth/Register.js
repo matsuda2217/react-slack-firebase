@@ -117,7 +117,7 @@ class Register extends React.Component {
                 placeholder="UserName"
                 onChange={this.handleChange}
                 type="text"
-                value={this.state.username}
+                value={username}
               />
               <Form.Input
                 fluid
@@ -127,7 +127,7 @@ class Register extends React.Component {
                 placeholder="Email"
                 onChange={this.handleChange}
                 type="text"
-                value={this.state.email}
+                value={email}
                 className={this.handleInputError(errors, 'email')}
               />
               <Form.Input
@@ -138,7 +138,7 @@ class Register extends React.Component {
                 placeholder="Password"
                 onChange={this.handleChange}
                 type="password"
-                value={this.state.password}
+                value={password}
                 className={this.handleInputError(errors, 'password')}
               />
               <Form.Input
@@ -149,7 +149,7 @@ class Register extends React.Component {
                 placeholder="Password Confirmation"
                 onChange={this.handleChange}
                 type="password"
-                value={this.state.passwordConfirmation}
+                value={passwordConfirmation}
                 className={this.handleInputError(errors, 'password')}
               />
               <Button className={loading ? "loading" : ""} color="orange" fluid size="large">Submit</Button>
