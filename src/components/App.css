@@ -27,3 +27,8 @@ html,
 .message__image {
   padding: 1em;
 }
+
+/* channels.js */
+.menu {
+  padding-bottom: 2em;
+}
