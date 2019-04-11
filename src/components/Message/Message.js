@@ -7,8 +7,10 @@ import Msg from './Msg';
 
 class Message extends React.Component {
 
-  state={
+  state = {
     messageRef: firebase.database().ref("messages"),
+    privateRef: firebase.database().ref("private"),
+    isPrivateChannel: this.props.isPrivateChannel,
     messages: [],
     channel: this.props.currentChannel,
     user: this.props.currentUser,
@@ -18,7 +20,7 @@ class Message extends React.Component {
   }
 
   componentDidMount = () => {
-    const { currentUser:user, currentChannel: channel } = this.props;
+    const { currentUser: user, currentChannel: channel } = this.props;
     if(channel && user) {
       this.addListener(channel.id);
     }
@@ -29,7 +31,7 @@ class Message extends React.Component {
   componentWillReceiveProps = nextProps => {
     const {currentChannel: channel} = nextProps;
     if (channel) {
-      this.setState({ channel}, () => {
+      this.setState({ channel }, () => {
         this.addListener(channel.id);
       })
     }
@@ -40,10 +42,11 @@ class Message extends React.Component {
   }
 
   addMessageListener = channelID => {
+    console.log("channelId", channelID);
     const loadedMessages = [];
     const { messageRef } = this.state;
     this.setState({messages: []});
-    messageRef.child(channelID).on("child_added", snap => {
+    this.getMessageRef().child(channelID).on("child_added", snap => {
       // console.log("messagesssss", snap.val());
       loadedMessages.push(snap.val());
       this.setState({
@@ -61,7 +64,10 @@ class Message extends React.Component {
       />
     ))
   )
-  displayChannelName = channel => (channel ? `#${channel.name}`: "");
+  displayChannelName = (channel, isPrivateChannel) => {
+    return channel ? isPrivateChannel ? `@${channel.name}`  : `#${channel.name}` : "";
+  }
+  
   caculateTotalUsers = messages => {
     let ids = messages.reduce((acc, msg) => {
       const { user: { id } } = msg;
@@ -74,7 +80,6 @@ class Message extends React.Component {
   }
   handleSearchMessage = event => {
     let searchTerm = event.target.value;
-    console.log("searchTerm", searchTerm);
     this.setState({
       searchLoading: true,
       searchTerm
@@ -92,16 +97,22 @@ class Message extends React.Component {
     }, () => setTimeout( () => this.setState({searchLoading: false}) , 1000))
   }
 
+  getMessageRef = () => {
+    const { messageRef, privateRef } = this.state;
+    const { isPrivateChannel } = this.props;
+    return isPrivateChannel ? privateRef : messageRef;
+  }
+
   render() {
-    const { messageRef, messages, searchResult, searchLoading, searchTerm } = this.state;
-    const { currentUser, currentChannel } = this.props;
+    const { messages, searchResult, searchLoading, searchTerm } = this.state;
+    const { currentUser, currentChannel, isPrivateChannel } = this.props;
     return (
       <React.Fragment>
         <MessagesHeader
           searchLoading={searchLoading}
           handleSearchMessage={this.handleSearchMessage}
           userAmount={this.caculateTotalUsers(messages)}
-          channelName={this.displayChannelName(currentChannel)}
+          channelName={this.displayChannelName(currentChannel, isPrivateChannel)}
         />
           <Segment>
             <Comment.Group className="messages">
@@ -110,9 +121,10 @@ class Message extends React.Component {
             </Comment.Group>
           </Segment>
         <MessagesForm
-          messageRef={messageRef}
+          messageRef={this.getMessageRef}
           currentUser={currentUser}
           currentChannel={currentChannel}
+          isPrivateChannel={isPrivateChannel}
         />
       </React.Fragment>
     )

@@ -1,9 +1,13 @@
 import React from 'react';
 import firebase from './../firebase';
+import { connect } from 'react-redux';
 import { Menu, Icon } from 'semantic-ui-react';
+
+import { setCurrentChannel , setPrivateChannel } from './../../actions/channelActions';
 
 class DirectMessages extends React.Component {
   state = {
+    activeChannel: '',
     users: [],
     usersRef: firebase.database().ref("users"),
     connectedRef: firebase.database().ref(".info/connected"),
@@ -69,10 +73,30 @@ class DirectMessages extends React.Component {
     this.setState({ users: updateUsers });
   }
 
-  displayUsers = users => users.map(user => 
+  changeChannel = user => {
+    const channelId = this.getChannelId(user.uid);
+    const channelData = {
+      id: channelId,
+      name: user.displayName
+    }
+    this.props.setCurrentChannel(channelData);
+    this.props.setPrivateChannel(true);
+    this.setActiveChannel(user.uid)
+  }
+
+  getChannelId = userId => {
+    const currentUserId = this.props.user.uid;
+    return userId < currentUserId ? `${userId}/${currentUserId}` : `${currentUserId}/${userId}` 
+  }
+  setActiveChannel = userId => {
+    this.setState({ activeChannel: userId });
+  }
+
+  displayUsers = (users, activeChannel) => users.map(user => 
     <Menu.Item 
+      active={activeChannel === user.uid}
       key={user.uid}
-      onClick={() => console.log(user)}
+      onClick={() => this.changeChannel(user)}
       style={{opacity: 0.7, fontStyle: 'italic'}}
     >
       @ {user.displayName}
@@ -83,7 +107,7 @@ class DirectMessages extends React.Component {
   isUserOnline = user => user.status === "online"
 
   render() {
-    const {users} = this.state;
+    const {users, activeChannel} = this.state;
     console.log("users", users);
     return (
       <Menu.Menu className="menu">
@@ -94,9 +118,9 @@ class DirectMessages extends React.Component {
           ({users.length})
         </Menu.Item>
         {/* User to send direct message */}
-        {this.displayUsers(users)}
+        {this.displayUsers(users, activeChannel)}
       </Menu.Menu>
     )
   }
 }
-export default DirectMessages;
+export default connect(null,{ setCurrentChannel, setPrivateChannel })(DirectMessages);
