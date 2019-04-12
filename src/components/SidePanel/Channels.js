@@ -45,7 +45,6 @@ class Channels extends React.Component {
   handleNotifications = (channelId, currentChannelId, notifications, snap) => {
     let lastTotal = 0;
     let index = notifications.findIndex(notify => notify.id === channelId);
-    console.log("num: ", snap.numChildren());
     if(index !== -1) {
       if (channelId !== currentChannelId) {
         lastTotal = notifications[index].total;
