@@ -1,10 +1,12 @@
 import React from 'react';
-import { Grid, Header, Icon, Dropdown, Image } from 'semantic-ui-react';
+import { Grid, Header, Icon, Dropdown, Image, Modal, Button, Input } from 'semantic-ui-react';
 import firebase from './../firebase';
 
 class UserPanel extends React.Component {
   state = {
-    user: this.props.currentUser
+    user: this.props.currentUser,
+    modal: false
+
   }
   trigger = user => (
     <span>
@@ -19,11 +21,11 @@ class UserPanel extends React.Component {
         key: 'user' 
       },
       {  
-        text: <span>Change avater</span>,
+        text: <span onClick={this.openModal}>Change avatar</span>,
         key: 'avatar'
       },
       {  
-        text: <span onClick={this.handleSignout} >Sign out</span>,
+        text: <span onClick={this.handleSignout}>Sign out</span>,
         key: 'signout'
       },
     ]
@@ -40,10 +42,19 @@ class UserPanel extends React.Component {
         console.log("err", err);
       })
   }
+  handleChangeAvatar = () => {
+
+  }
+
+  closeModal = () => {this.setState({modal: false})};
+
+  openModal = () => {this.setState({modal: true})};
+
   render() {
-    const { user } = this.state;
+    const { user, modal } = this.state;
+    const { secondaryColor } = this.props;
     return (
-      <Grid style={{background: '#4c3c4c'}}>
+      <Grid style={{background: secondaryColor}}>
         <Grid.Column>
           <Grid.Row style={{padding: '1.2em', margin: 0}}>
             {/* App header */}
@@ -52,7 +63,6 @@ class UserPanel extends React.Component {
               <Header.Content >Devchat</Header.Content>
             </Header>
           </Grid.Row>
-
           {/* User Dropdown */}
           <Header style={{padding: '0.25em'}} as="h4">
             <Dropdown trigger={this.trigger(user)} options={this.userOptions()} >
@@ -60,6 +70,45 @@ class UserPanel extends React.Component {
             </Dropdown>
           </Header>
         </Grid.Column>
+        <Modal 
+          basic
+          open={modal}
+          onClose={this.closeModal}
+          size="fullscreen"
+        >
+          <Modal.Content>
+            <Input
+              fluid
+              inverted
+              label="File type png, jpg"
+              type="file"
+            />
+          </Modal.Content>
+          <Modal.Actions>
+            <Button
+              inverted
+              color="green"
+            >
+              <Icon name="checkmark"/>
+              Save Image
+            </Button>
+            <Button
+              inverted
+              color="green"
+            >
+              <Icon name="image"/>
+              Preview
+            </Button>
+            <Button
+              onClick={this.closeModal}
+              inverted
+              color="grey"
+            >
+              <Icon name="remove"/>
+              Cancel
+            </Button>
+          </Modal.Actions>
+        </Modal>
       </Grid>
     )
   }

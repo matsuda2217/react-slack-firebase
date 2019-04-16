@@ -1,9 +1,11 @@
 import React from 'react';
+import { connect } from 'react-redux';
 import { Segment, Comment } from 'semantic-ui-react';
 import firebase from './../firebase';
 import MessagesHeader from './MessagesHeader';
 import MessagesForm from './MessagesForm';
 import Msg from './Msg';
+import { setUserPosts } from './../../actions/channelActions';
 
 class Message extends React.Component {
 
@@ -50,12 +52,13 @@ class Message extends React.Component {
     const { messageRef } = this.state;
     this.setState({messages: []});
     this.getMessageRef().child(channelID).on("child_added", snap => {
-      // console.log("messagesssss", snap.val());
       loadedMessages.push(snap.val());
       this.setState({
         messages: loadedMessages,
         messageLoading: false
       })
+      this.caculateTotalUsers(loadedMessages);
+      this.countUserPosts(loadedMessages);
     })
   }
 
@@ -96,6 +99,21 @@ class Message extends React.Component {
       return acc;
     }, [])
     return ids;
+  }
+
+  countUserPosts = messages => {
+    let userPosts = messages.reduce((acc, msg) => {
+      if (msg.user.name in acc) {
+        acc[msg.user.name].count +=1;
+      } else {
+        acc[msg.user.name] = {
+          avatar: msg.user.avatar,
+          count: 1
+        }
+      }
+      return acc;
+    }, {})
+    this.props.setUserPosts(userPosts);
   }
   handleSearchMessage = event => {
     let searchTerm = event.target.value;
@@ -187,4 +205,4 @@ class Message extends React.Component {
     )
   }
 }
-export default Message;
+export default connect(null, { setUserPosts })(Message);

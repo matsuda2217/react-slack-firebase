@@ -22,6 +22,7 @@ class Root extends React.Component{
     .auth()
     .onAuthStateChanged(user => {
       if (user) {
+        alert(`${process.env.REACT_APP_SECRET_CODE}::::${process.env.NODE_ENV}:::${process.env.PUBLIC_URL}` );
         console.log("isLoading", this.props.isLoading);
         this.props.setUser(user);
         this.props.history.push("/");
