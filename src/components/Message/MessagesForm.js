@@ -4,11 +4,15 @@ import { Segment, Input, Button } from 'semantic-ui-react';
 import firebase from './../firebase';
 import FileModal from './FileModal';
 
+import 'emoji-mart/css/emoji-mart.css';
+import { Picker } from 'emoji-mart';
+
 class MessagesForm extends React.Component{
   state = {
     uploadStated: "",
     uploadTask: null,
     storageRef: firebase.storage().ref(),
+    typingRef: firebase.database().ref("typing"),
     user: this.props.currentUser,
     channel: this.props.currentChannel,
     messageRef: this.props.messageRef,
@@ -17,6 +21,7 @@ class MessagesForm extends React.Component{
     errors: [],
     modal: false,
     percent: -1,
+    emojiPicker: false,
   }
 
   componentWillReceiveProps = nextProps => {
@@ -29,7 +34,7 @@ class MessagesForm extends React.Component{
 
   sendMessage = event => {
     event.preventDefault();
-    const {message} = this.state;
+    const {message, typingRef} = this.state;
     this.setState({loading: true});
     if (message) {
       this.props.messageRef()
@@ -39,6 +44,10 @@ class MessagesForm extends React.Component{
       .then(() => {
         this.setState({loading: false, errors: [], message: ''});
         console.log("Message created");
+        typingRef
+          .child( this.props.currentChannel.id)
+          .child(this.props.currentUser.uid)
+          .remove();
       })
       .catch(err => {
         console.log("err", err);
@@ -130,16 +139,75 @@ class MessagesForm extends React.Component{
         })
       }) 
   }
+  handleKeyDown = e => {
+    
+    if (e.ctrlKey && e.keyCode === 13) {
+      this.sendMessage(e);
+    }
+    const {message, typingRef} = this.state;
+    const {currentUser: user, currentChannel: channel} = this.props;
+    if (message) {
+      typingRef
+        .child(channel.id)
+        .child(user.uid)
+        .set(user.displayName)
+        .then( () => {
+          console.log("Typing set");
+        })
+        .catch(err => {
+          console.log("error typing: ", err);
+          
+        })
+    } else {
+      typingRef
+        .child(channel.id)
+        .child(user.uid)
+        .remove();
+    }
+  }
+  handleTogglePicker = () => {
+    this.setState({emojiPicker: !this.state.emojiPicker});
+  }
+  handleAddEmoji = emoji => {
+    console.log("emoji", emoji);
+    
+    const oldMsg = this.state.message;
+    const newMsg = `${oldMsg} ${emoji.native} `;
+    this.setState({message: newMsg, emojiPicker: false});
+    
+    setTimeout(() => {
+      this.messageInputRef.focus()
+    }, 0);
+  }
+  colonToUniCode = message => {
+    return message.replace()
+  }
   render() {
-    const {message, errors, loading, modal, percent, uploadStated} = this.state;
+    const {message, errors, loading, modal, percent, uploadStated, emojiPicker} = this.state;
     return(
       <Segment className="message__form">
+        {emojiPicker && (
+          <Picker
+            set='google'
+            onSelect={this.handleAddEmoji}
+            className="emojipicker"
+            title="Pick your emoji"
+            emoji="point_up"
+          />
+        )}
         <Input
           onChange={this.handleChange}
+          onKeyDown={this.handleKeyDown}
           fluid
           name="message"
           style={{marginBottom: '.7em'}}
-          label={<Button icon="add"/>}
+          ref={node =>( this.messageInputRef= node )}
+          label={
+            <Button 
+              icon={emojiPicker ? "close" : "add"} 
+              content={emojiPicker ? "Close" : null}
+              onClick={this.handleTogglePicker}
+            />}
           labelPosition="left"
           placeholder="Write your message"
           value={message}

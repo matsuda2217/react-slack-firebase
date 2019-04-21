@@ -14,7 +14,7 @@ class SidePanel extends React.Component {
         inverted
         fixed="left"
         vertical
-        style={{background: secondaryColor, fontSize: '1.2rem'}}
+        style={{background: secondaryColor, fontSize: '1.2rem', left: '60px'}}
       >
         <UserPanel
           secondaryColor={secondaryColor}

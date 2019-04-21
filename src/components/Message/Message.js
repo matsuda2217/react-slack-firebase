@@ -6,6 +6,8 @@ import MessagesHeader from './MessagesHeader';
 import MessagesForm from './MessagesForm';
 import Msg from './Msg';
 import { setUserPosts } from './../../actions/channelActions';
+import Typing from './Typing';
+import Skeleton from './Skeleton';
 
 class Message extends React.Component {
 
@@ -13,6 +15,8 @@ class Message extends React.Component {
     messageRef: firebase.database().ref("messages"),
     privateRef: firebase.database().ref("private"),
     userRef: firebase.database().ref("users"),
+    connectedRef: firebase.database().ref(".info/connected"),
+    typingRef: firebase.database().ref("typing"),
     isPrivateChannel: this.props.isPrivateChannel,
     messages: [],
     channel: this.props.currentChannel,
@@ -22,6 +26,8 @@ class Message extends React.Component {
     searchResult: [],
     isStarredChannel: false,
     starredChannels: [],
+    usersTyping: [],
+    messageLoading: true,
   }
 
   componentDidMount = () => {
@@ -30,9 +36,11 @@ class Message extends React.Component {
       this.addListener(channel.id);
     }
   }
+
   componentWillMount = () => {
     this.state.messageRef.off();
   }
+
   componentWillReceiveProps = nextProps => {
     const {currentChannel: channel} = nextProps;
     if (channel) {
@@ -42,9 +50,16 @@ class Message extends React.Component {
     }
   }
 
+  componentDidUpdate = (prevProps, prevState) => {
+    if (this.messagesEnd) {
+      this.messagesEnd.scrollIntoView({ behavior: "smooth"});
+    }
+  }
+
   addListener = channelID => {
     this.addMessageListener(channelID);
     this.addStarredListener(channelID);
+    this.addTypingListener(channelID);
   }
 
   addMessageListener = channelID => {
@@ -76,7 +91,49 @@ class Message extends React.Component {
       }
     })
   }
+  addTypingListener = channelID => {
+    const { typingRef} = this.state;
+    const { currentUser: user } = this.props;
+    let usersTyping = [];
+    typingRef
+      .child(channelID)
+      .on("child_added", snap => {
+        if( snap.key !== user.uid ) {
+          usersTyping =  usersTyping.concat({
+            id: snap.key, 
+            name: snap.val()
+          });
+        } 
+        this.setState({usersTyping})
+      })
+    typingRef
+      .child(channelID)
+      .on("child_removed", snap => {
+        const index = usersTyping.findIndex( user => {
+          return user.id == snap.key;
+        })
+        if (index != -1) {
+          usersTyping = usersTyping.filter(user => {
+            return user.id !== snap.key
+          })
+        } 
+        this.setState({usersTyping});
+      })
 
+    this.state.connectedRef.on("value", snap => {
+      if (snap.val()===true) {
+        this.state.typingRef
+          .child(channelID)
+          .child(this.state.user.uid)
+          .onDisconnect()
+          .remove(err => {
+            if(err !=null) {
+              console.log(err);
+            }
+          })
+      }
+    })
+  }
   displayMessages = messages => (
     messages.length > 0 && messages.map(msg => (
       <Msg
@@ -175,8 +232,24 @@ class Message extends React.Component {
       })
     }
   }
+  displayUsersTyping = users => (
+    users.length > 0 && users.map( user => (
+      <div style={{display: 'flex', alignItems: "center"}}>
+        <span className="user__typing">{user.name} is typing</span><Typing/>
+      </div>
+    ))
+  )
+  displayMessageSkeleton = messageLoading => (
+    messageLoading ? (
+      <React.Fragment>
+        {[...Array(10)].map((_, i) => (
+          <Skeleton key={i}/>
+        ))}
+      </React.Fragment>
+    ) : null
+  )
   render() {
-    const { messages, searchResult, searchLoading, searchTerm, isStarredChannel } = this.state;
+    const { messages, searchResult, searchLoading, searchTerm, isStarredChannel, usersTyping, messageLoading } = this.state;
     const { currentUser, currentChannel, isPrivateChannel } = this.props;
     return (
       <React.Fragment>
@@ -191,8 +264,11 @@ class Message extends React.Component {
         />
           <Segment>
             <Comment.Group className="messages">
+              {this.displayMessageSkeleton(messageLoading)}
               {/* messages */}
               { searchTerm ? this.displayMessages(searchResult) : this.displayMessages(messages)}
+              {this.displayUsersTyping(usersTyping)}
+              <div ref={node => (this.messagesEnd = node)}></div>
             </Comment.Group>
           </Segment>
         <MessagesForm

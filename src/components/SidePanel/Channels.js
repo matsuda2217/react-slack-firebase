@@ -16,6 +16,7 @@ class Channels extends React.Component {
     open: false,
     channelRef: firebase.database().ref("channels"),
     messagesRef: firebase.database().ref("messages"),
+    typingRef: firebase.database().ref("typing"), 
     notifications: [],
     firstLoad: true
   }
@@ -115,6 +116,10 @@ class Channels extends React.Component {
   isFormValid = ({channelName, chanelDescription}) => (channelName && chanelDescription);
 
   handleChannelChange = channel => {
+    this.state.typingRef
+      .child(this.state.channel.id)
+      // .child(this.props.currentUser.uid)
+      .remove();
     this.setState({ 
       currentChannel: channel,
       activeChannel: channel.id,
