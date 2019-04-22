@@ -79,7 +79,7 @@ class MessagesForm extends React.Component{
     this.setState({ modal: false });
   }
   getFilePath = (isPrivateChannel) => {
-    return isPrivateChannel ? `chat/private-${this.props.currentChannel.id}` : "chat/public";
+    return isPrivateChannel ? `chat/private/${this.props.currentChannel.id}` : "chat/public";
   }
   uploadFile = (file, metaData) => {
     const { isPrivateChannel, currentChannel: { id: pathToUpload } } = this.props;
